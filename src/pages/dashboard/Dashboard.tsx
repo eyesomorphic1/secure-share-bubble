@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Upload, Download, Share2, Trash2, Search, User } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Upload, Download, Share2, Trash2, Search, User, FileText, FileImage, FileVideo, File } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { RootState } from '@/store/store';
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFile, setSelectedFile] = useState<any>(null);
   const { toast } = useToast();
   const userRole = useSelector((state: RootState) => state.auth.user?.role);
+  const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
 
   // Dummy data for demonstration
   const files = [
@@ -21,35 +24,48 @@ const Dashboard = () => {
       name: 'document.pdf', 
       size: '2.5 MB', 
       shared: true, 
-      createdAt: '2024-01-19', 
+      uploadDate: '2024-01-19 14:30',
       ownerId: '1',
       uploadedBy: 'John Doe',
-      uploadedAt: '2024-01-19 14:30',
-      lastModified: '2024-01-19 15:45'
+      type: 'pdf',
+      url: 'https://example.com/document.pdf'
     },
     { 
       id: '2', 
       name: 'image.jpg', 
       size: '1.8 MB', 
       shared: false, 
-      createdAt: '2024-01-18', 
+      uploadDate: '2024-01-18 09:15',
       ownerId: '2',
       uploadedBy: 'Jane Smith',
-      uploadedAt: '2024-01-18 09:15',
-      lastModified: '2024-01-18 09:15'
+      type: 'image',
+      url: 'https://example.com/image.jpg'
     },
     { 
       id: '3', 
       name: 'presentation.pptx', 
       size: '5.2 MB', 
       shared: true, 
-      createdAt: '2024-01-17', 
+      uploadDate: '2024-01-17 11:20',
       ownerId: '1',
       uploadedBy: 'John Doe',
-      uploadedAt: '2024-01-17 11:20',
-      lastModified: '2024-01-19 16:30'
+      type: 'pptx',
+      url: 'https://example.com/presentation.pptx'
     },
   ];
+
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case 'pdf':
+        return <FileText className="h-6 w-6 text-red-500" />;
+      case 'image':
+        return <FileImage className="h-6 w-6 text-blue-500" />;
+      case 'video':
+        return <FileVideo className="h-6 w-6 text-purple-500" />;
+      default:
+        return <File className="h-6 w-6 text-gray-500" />;
+    }
+  };
 
   // Filter files based on search query
   const filteredFiles = files.filter(file => 
@@ -64,7 +80,6 @@ const Dashboard = () => {
   };
 
   const handleFileDelete = (fileId: string) => {
-    // Only admin and file owner can delete
     toast({
       title: "File Deleted",
       description: "File has been removed",
@@ -73,7 +88,7 @@ const Dashboard = () => {
 
   const canUploadFiles = userRole !== 'guest';
   const canDeleteFile = (fileOwnerId: string) => {
-    return userRole === 'admin' || (userRole === 'user' && fileOwnerId === '1'); // '1' is dummy current user ID
+    return userRole === 'admin' || (userRole === 'user' && fileOwnerId === currentUserId);
   };
 
   return (
@@ -107,70 +122,92 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead>Uploaded By</TableHead>
-                  <TableHead>Upload Date</TableHead>
-                  <TableHead>Last Modified</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredFiles.map((file) => (
-                  <TableRow key={file.id}>
-                    <TableCell>{file.name}</TableCell>
-                    <TableCell>{file.size}</TableCell>
-                    <TableCell className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {file.uploadedBy}
-                    </TableCell>
-                    <TableCell>{file.uploadedAt}</TableCell>
-                    <TableCell>{file.lastModified}</TableCell>
-                    <TableCell>
-                      {file.shared ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Shared
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          Private
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => setSelectedFile(file)}
+                >
+                  <div className="flex items-center space-x-3">
+                    {getFileIcon(file.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {file.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {file.size}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {userRole === 'admin' && (
+                        <span className="text-xs text-gray-500">
+                          {file.uploadedBy}
                         </span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="icon">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        {userRole !== 'guest' && (
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/files/${file.id}/share`}>
-                              <Share2 className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        )}
-                        {canDeleteFile(file.ownerId) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleFileDelete(file.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        file.shared ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {file.shared ? 'Shared' : 'Private'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <Button variant="ghost" size="sm">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    {userRole !== 'guest' && (
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link to={`/files/${file.id}/share`}>
+                          <Share2 className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    )}
+                    {canDeleteFile(file.ownerId) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileDelete(file.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </main>
+
+      <Dialog open={!!selectedFile} onOpenChange={() => setSelectedFile(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              {selectedFile && (
+                <>
+                  {getFileIcon(selectedFile.type)}
+                  <span>{selectedFile?.name}</span>
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {selectedFile && (
+              <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                <iframe
+                  src={selectedFile.url}
+                  className="w-full h-full"
+                  title={selectedFile.name}
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
