@@ -1,8 +1,8 @@
 import { apiClient } from '@/lib/api-client';
-import { File } from '@/store/slices/fileSlice';
+import type { File } from '@/store/slices/fileSlice';
 
 // Mock data for development
-const mockFiles = [
+const mockFiles: File[] = [
   { 
     id: '1', 
     name: 'document.pdf', 
@@ -12,7 +12,8 @@ const mockFiles = [
     ownerId: '1',
     uploadedBy: 'John Doe',
     type: 'pdf',
-    url: 'https://example.com/document.pdf'
+    url: 'https://example.com/document.pdf',
+    encrypted: false
   },
   { 
     id: '2', 
@@ -23,7 +24,8 @@ const mockFiles = [
     ownerId: '2',
     uploadedBy: 'Jane Smith',
     type: 'image',
-    url: 'https://example.com/image.jpg'
+    url: 'https://example.com/image.jpg',
+    encrypted: false
   },
   { 
     id: '3', 
@@ -34,7 +36,8 @@ const mockFiles = [
     ownerId: '1',
     uploadedBy: 'John Doe',
     type: 'pptx',
-    url: 'https://example.com/presentation.pptx'
+    url: 'https://example.com/presentation.pptx',
+    encrypted: false
   },
 ];
 

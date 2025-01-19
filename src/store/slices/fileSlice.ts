@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface File {
+export interface File {
   id: string;
   name: string;
   size: string;
