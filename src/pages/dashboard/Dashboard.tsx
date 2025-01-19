@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Upload, Download, Share2, Trash2, Search } from "lucide-react";
+import { Upload, Download, Share2, Trash2, Search, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { RootState } from '@/store/store';
 
@@ -16,9 +16,39 @@ const Dashboard = () => {
 
   // Dummy data for demonstration
   const files = [
-    { id: '1', name: 'document.pdf', size: '2.5 MB', shared: true, createdAt: '2024-01-19', ownerId: '1' },
-    { id: '2', name: 'image.jpg', size: '1.8 MB', shared: false, createdAt: '2024-01-18', ownerId: '2' },
-    { id: '3', name: 'presentation.pptx', size: '5.2 MB', shared: true, createdAt: '2024-01-17', ownerId: '1' },
+    { 
+      id: '1', 
+      name: 'document.pdf', 
+      size: '2.5 MB', 
+      shared: true, 
+      createdAt: '2024-01-19', 
+      ownerId: '1',
+      uploadedBy: 'John Doe',
+      uploadedAt: '2024-01-19 14:30',
+      lastModified: '2024-01-19 15:45'
+    },
+    { 
+      id: '2', 
+      name: 'image.jpg', 
+      size: '1.8 MB', 
+      shared: false, 
+      createdAt: '2024-01-18', 
+      ownerId: '2',
+      uploadedBy: 'Jane Smith',
+      uploadedAt: '2024-01-18 09:15',
+      lastModified: '2024-01-18 09:15'
+    },
+    { 
+      id: '3', 
+      name: 'presentation.pptx', 
+      size: '5.2 MB', 
+      shared: true, 
+      createdAt: '2024-01-17', 
+      ownerId: '1',
+      uploadedBy: 'John Doe',
+      uploadedAt: '2024-01-17 11:20',
+      lastModified: '2024-01-19 16:30'
+    },
   ];
 
   // Filter files based on search query
@@ -82,7 +112,9 @@ const Dashboard = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Size</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Uploaded By</TableHead>
+                  <TableHead>Upload Date</TableHead>
+                  <TableHead>Last Modified</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -92,7 +124,12 @@ const Dashboard = () => {
                   <TableRow key={file.id}>
                     <TableCell>{file.name}</TableCell>
                     <TableCell>{file.size}</TableCell>
-                    <TableCell>{file.createdAt}</TableCell>
+                    <TableCell className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      {file.uploadedBy}
+                    </TableCell>
+                    <TableCell>{file.uploadedAt}</TableCell>
+                    <TableCell>{file.lastModified}</TableCell>
                     <TableCell>
                       {file.shared ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
