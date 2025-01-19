@@ -1,25 +1,32 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Upload, Download, Share2, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { RootState } from '@/store/store';
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const userRole = useSelector((state: RootState) => state.auth.user?.role);
 
   // Dummy data for demonstration
   const files = [
-    { id: '1', name: 'document.pdf', size: '2.5 MB', shared: true, createdAt: '2024-01-19' },
-    { id: '2', name: 'image.jpg', size: '1.8 MB', shared: false, createdAt: '2024-01-18' },
-    { id: '3', name: 'presentation.pptx', size: '5.2 MB', shared: true, createdAt: '2024-01-17' },
+    { id: '1', name: 'document.pdf', size: '2.5 MB', shared: true, createdAt: '2024-01-19', ownerId: '1' },
+    { id: '2', name: 'image.jpg', size: '1.8 MB', shared: false, createdAt: '2024-01-18', ownerId: '2' },
+    { id: '3', name: 'presentation.pptx', size: '5.2 MB', shared: true, createdAt: '2024-01-17', ownerId: '1' },
   ];
 
+  // Filter files based on search query
+  const filteredFiles = files.filter(file => 
+    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleFileUpload = () => {
-    // TODO: Implement actual file upload logic
     toast({
       title: "File Upload",
       description: "File uploaded successfully",
@@ -27,11 +34,16 @@ const Dashboard = () => {
   };
 
   const handleFileDelete = (fileId: string) => {
-    // TODO: Implement actual file deletion logic
+    // Only admin and file owner can delete
     toast({
       title: "File Deleted",
       description: "File has been removed",
     });
+  };
+
+  const canUploadFiles = userRole !== 'guest';
+  const canDeleteFile = (fileOwnerId: string) => {
+    return userRole === 'admin' || (userRole === 'user' && fileOwnerId === '1'); // '1' is dummy current user ID
   };
 
   return (
@@ -40,10 +52,12 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">My Files</h1>
-            <Button onClick={handleFileUpload}>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload File
-            </Button>
+            {canUploadFiles && (
+              <Button onClick={handleFileUpload}>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload File
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -74,7 +88,7 @@ const Dashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {files.map((file) => (
+                {filteredFiles.map((file) => (
                   <TableRow key={file.id}>
                     <TableCell>{file.name}</TableCell>
                     <TableCell>{file.size}</TableCell>
@@ -95,18 +109,22 @@ const Dashboard = () => {
                         <Button variant="ghost" size="icon">
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link to={`/files/${file.id}/share`}>
-                            <Share2 className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleFileDelete(file.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {userRole !== 'guest' && (
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/files/${file.id}/share`}>
+                              <Share2 className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        )}
+                        {canDeleteFile(file.ownerId) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleFileDelete(file.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
