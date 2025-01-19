@@ -4,15 +4,27 @@ import { useSelector } from 'react-redux';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Download, Share2, Trash2, Search, User, FileText, FileImage, FileVideo, File } from "lucide-react";
+import { 
+  Upload, Download, Share2, Trash2, Search, 
+  FileText, FileImage, FileVideo, File,
+  ArrowUpDown
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { RootState } from '@/store/store';
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<'name' | 'date' | 'size'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const { toast } = useToast();
   const userRole = useSelector((state: RootState) => state.auth.user?.role);
   const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
@@ -67,9 +79,36 @@ const Dashboard = () => {
     }
   };
 
-  // Filter files based on search query
-  const filteredFiles = files.filter(file => 
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Sort files based on selected criteria
+  const getSortedFiles = (files: any[]) => {
+    return [...files].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'date':
+          comparison = new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime();
+          break;
+        case 'size':
+          const sizeA = parseFloat(a.size);
+          const sizeB = parseFloat(b.size);
+          comparison = sizeA - sizeB;
+          break;
+        default:
+          comparison = 0;
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  // Filter and sort files
+  const filteredAndSortedFiles = getSortedFiles(
+    files.filter(file => 
+      file.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
   );
 
   const handleFileUpload = () => {
@@ -84,6 +123,10 @@ const Dashboard = () => {
       title: "File Deleted",
       description: "File has been removed",
     });
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(current => current === 'asc' ? 'desc' : 'asc');
   };
 
   const canUploadFiles = userRole !== 'guest';
@@ -120,10 +163,35 @@ const Dashboard = () => {
                   className="pl-10"
                 />
               </div>
+              <div className="flex items-center space-x-2">
+                <Select
+                  value={sortBy}
+                  onValueChange={(value: 'name' | 'date' | 'size') => setSortBy(value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Sort by..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="date">Upload Date</SelectItem>
+                    <SelectItem value="size">Size</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleSortOrder}
+                  className="w-10 h-10"
+                >
+                  <ArrowUpDown className={`h-4 w-4 transform ${
+                    sortOrder === 'desc' ? 'rotate-180' : ''
+                  }`} />
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredFiles.map((file) => (
+              {filteredAndSortedFiles.map((file) => (
                 <div
                   key={file.id}
                   className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
